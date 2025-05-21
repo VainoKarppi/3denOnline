@@ -1,0 +1,11 @@
+# Ignore bin and obj folders
+bin/
+obj/
+[Tt]ools/callExtension/
+
+*.sln
+*.dll
+*.pbo
+*.log
+
+**/hash.txt
