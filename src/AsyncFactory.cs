@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static ArmaExtension.Logger;
@@ -42,6 +40,8 @@ namespace ArmaExtension {
                 try {
                     object?[] unserializedData = Serializer.DeserializeJsonArray(argArray);
 
+                    RaiseAsyncTaskStartd(method.Name, asyncKey, unserializedData);
+
                     Log(@$"ASYNC RESPONSE {(isVoid ? "(VOID)" : "")} >> [""{method.Name}|{asyncKey}"", {Serializer.PrintArray(unserializedData)}]");
 
                     ParameterInfo[] parameters = method.GetParameters();
@@ -60,9 +60,11 @@ namespace ArmaExtension {
                         if (taskResult.GetType().IsGenericType)
                             result = ((dynamic)taskResult).Result;
                     }
-
+                    
+                    RaiseAsyncTaskCompleted(method.Name, asyncKey, true, [result]);
                     SendAsyncCallbackMessage(ResultCodes.ASYNC_RESPONSE.ToString(), [result], (int)ReturnCodes.Success, asyncKey);
                 } catch (Exception ex) {
+                    RaiseAsyncTaskCompleted(method.Name, asyncKey, false, [ex.Message]);
                     SendAsyncCallbackMessage(ResultCodes.ASYNC_FAILED.ToString(), [ex.Message], (int)ReturnCodes.Error, asyncKey);
                 } finally {
                     AsyncTasks.TryRemove(asyncKey, out _);
